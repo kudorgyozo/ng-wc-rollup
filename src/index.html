@@ -14,6 +14,14 @@
       .catch(error => console.error(error))
   </script>
 
-  <wrapper-wc counter='77'></wrapper-wc>
+  <wrapper-wc id='wrapper' counter='77'></wrapper-wc>
+
+  <script>
+    const wrapper = document.getElementById('wrapper');
+    wrapper.addEventListener('countChanged', (e) => {
+      console.log(`count changed (index) ${e.detail}`);
+    });
+
+  </script>
 </body>
 </html>

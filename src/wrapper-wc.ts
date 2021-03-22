@@ -4,22 +4,24 @@ import {
   NgModuleRef,
   ApplicationRef,
   NgZone,
-  InjectionToken
+  InjectionToken,
+  ComponentRef
 } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from './app/app.module';
 import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
-import { CounterContext } from './CounterContext';
 
 if (environment.production) {
   enableProdMode();
 }
 
 class WrapperWebComponent extends HTMLElement {
-  wasRendered = false;
 
-  constructor() {    
+  appComponentRef: ComponentRef<AppComponent> = null;
+  ngZone: NgZone;
+
+  constructor() {
     super();
     this.attachShadow({ mode: 'open' });
   }
@@ -28,61 +30,39 @@ class WrapperWebComponent extends HTMLElement {
     return ['counter'];
   }
 
-  get counter() {
-    return this.getAttribute('counter');
+  get counter(): number {
+    return Number.parseInt(this.getAttribute('counter'));
   }
 
   set counter(value) {
-    this.setAttribute('counter', value);
+    this.setAttribute('counter', value.toString());
   }
 
   /**
-   * Get the element to which the app component is attached to from the shadow root
+   * callback, called when the element is added to the page
    */
-  get _appComponent() {
-    return this.shadowRoot.querySelector('#app-component');
-  }
-
-  /**
-   * bootstrap angular
-   */
-  async _bootstrapAngular() {
-   
-    const counterContext = new CounterContext();
-    counterContext.counter = Number.parseInt(this.counter);
-
-    return platformBrowserDynamic([
-      { 
-        provide: CounterContext,
-        useValue: counterContext,
-      }
-    ]).bootstrapModule(AppModule);
-  }
-
   connectedCallback() {
-    this.render();
+    this.setup();
   }
 
+  /**
+   * called when an attribute changes
+   */
   attributeChangedCallback(name, oldValue, newValue) {
-    if (this.wasRendered) {
-      this.render();
+    //TODO: probably wait for angular to finish
+    if (this.appComponentRef) {
+      this.ngZone.run(() => {
+        this.appComponentRef.instance.counter = this.counter;
+      });
     }
   }
 
-  render() {
-    debugger;
-    if (this.wasRendered) {
-      const oldElement = this.shadowRoot.getElementById('app-counter');
-      this.shadowRoot.removeChild(oldElement);
-    }
+  setup() {
+    const style = document.createElement('style');
+    style.setAttribute('type', 'text/css');
+    style.appendChild(document.createTextNode(':host { height: 100%; display: block; }'));
+    this.shadowRoot.appendChild(style);
 
-    //const docFragment = document.createDocumentFragment();
-    if (!this.wasRendered) {
-      const style = document.createElement('style');
-      style.setAttribute('type', 'text/css');
-      style.appendChild(document.createTextNode(':host { height: 100%; display: block; }'));
-      this.shadowRoot.appendChild(style);
-    }
     const appElement = document.createElement('app-counter');
 
     Object.defineProperty(appElement, 'ownerDocument', { value: this.shadowRoot });
@@ -90,16 +70,26 @@ class WrapperWebComponent extends HTMLElement {
     //docFragment.appendChild(appElement);
     this.shadowRoot.appendChild(appElement);
 
-    this._bootstrapAngular()
+    let that = this;
+
+    platformBrowserDynamic().bootstrapModule(AppModule)
       .then((moduleRef: NgModuleRef<AppModule>) => {
         const app: ApplicationRef = moduleRef.injector.get(ApplicationRef);
         const ngZone: NgZone = moduleRef.injector.get(NgZone);
-        ngZone.run(() => { 
-          const compRef = app.bootstrap(AppComponent, this._appComponent);
+        that.ngZone = ngZone;
+        ngZone.run(() => {
+          that.appComponentRef = app.bootstrap(AppComponent, appElement);
+          that.appComponentRef.instance.counter = this.counter;
+          that.appComponentRef.instance.countChanged.subscribe((count: number) => that.countChanged(count));
         });
-        this.wasRendered = true;
       })
       .catch(err => console.error(err));
+  }
+
+  countChanged(count: number) {
+    const event = new CustomEvent<number>('countChanged', { detail: count });  
+    this.dispatchEvent(event);
+    console.log(`count changed (wrapper-wc): ${count}`); 
   }
 }
 

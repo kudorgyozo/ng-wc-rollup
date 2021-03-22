@@ -9,8 +9,7 @@ import { CounterContext } from 'src/CounterContext';
 export class AppComponent {
   title = 'ng-wc-rollup';
 
-  constructor(@Inject(CounterContext) private counterContext: CounterContext) {
-    this.counter = counterContext.counter
+  constructor() {
   }
 
   @Input() counter = 0;
