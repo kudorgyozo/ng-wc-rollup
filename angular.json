@@ -123,6 +123,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "ng-wc-rollup"
+    }
+  },
+  "defaultProject": "ng-wc-rollup",
+  "cli": {
+    "analytics": false
+  }
 }
