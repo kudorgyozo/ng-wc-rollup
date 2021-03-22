@@ -8,6 +8,12 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
-  <app-root></app-root>
+  <script type="module">
+    import('/wrapper-wc.js')
+      .then(module => window.customElements.define('wrapper-wc', module.default))
+      .catch(error => console.error(error))
+  </script>
+
+  <wrapper-wc counter='77'></wrapper-wc>
 </body>
 </html>

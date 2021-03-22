@@ -1,12 +1,17 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { CounterContext } from 'src/CounterContext';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-counter',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
   title = 'ng-wc-rollup';
+
+  constructor(@Inject(CounterContext) private counterContext: CounterContext) {
+    this.counter = counterContext.counter
+  }
 
   @Input() counter = 0;
   @Output() countChanged = new EventEmitter<number>();
