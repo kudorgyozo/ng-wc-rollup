@@ -16,6 +16,9 @@ if (environment.production) {
   enableProdMode();
 }
 
+/**
+ * Web component that wraps an angular element
+ */
 class WrapperWebComponent extends HTMLElement {
 
   appComponentRef: ComponentRef<AppComponent> = null;
@@ -60,14 +63,11 @@ class WrapperWebComponent extends HTMLElement {
   setup() {
     const style = document.createElement('style');
     style.setAttribute('type', 'text/css');
-    style.appendChild(document.createTextNode(':host { height: 100%; display: block; }'));
+    style.appendChild(document.createTextNode(':host { display: block; }'));
     this.shadowRoot.appendChild(style);
 
     const appElement = document.createElement('app-counter');
-
     Object.defineProperty(appElement, 'ownerDocument', { value: this.shadowRoot });
-    appElement.setAttribute('id', 'app-component');
-    //docFragment.appendChild(appElement);
     this.shadowRoot.appendChild(appElement);
 
     let that = this;
@@ -79,17 +79,19 @@ class WrapperWebComponent extends HTMLElement {
         that.ngZone = ngZone;
         ngZone.run(() => {
           that.appComponentRef = app.bootstrap(AppComponent, appElement);
+
+          //forward @Input and @Output properties
           that.appComponentRef.instance.counter = this.counter;
-          that.appComponentRef.instance.countChanged.subscribe((count: number) => that.countChanged(count));
+          that.appComponentRef.instance.countChanged.subscribe((count: number) => that.onCountChanged(count));
+
         });
       })
       .catch(err => console.error(err));
   }
 
-  countChanged(count: number) {
+  onCountChanged(count: number) {
     const event = new CustomEvent<number>('countChanged', { detail: count });  
     this.dispatchEvent(event);
-    console.log(`count changed (wrapper-wc): ${count}`); 
   }
 }
 

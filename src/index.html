@@ -10,11 +10,11 @@
 <body>
   <script type="module">
     import('/wrapper-wc.js')
-      .then(module => window.customElements.define('wrapper-wc', module.default))
+      .then(module => window.customElements.define('counter-wc', module.default))
       .catch(error => console.error(error))
   </script>
 
-  <wrapper-wc id='wrapper' counter='77'></wrapper-wc>
+  <counter-wc id='wrapper' counter='77'></counter-wc>
 
   <script>
     const wrapper = document.getElementById('wrapper');
